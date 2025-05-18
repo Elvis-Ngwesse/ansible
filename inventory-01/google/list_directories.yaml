@@ -2,50 +2,51 @@
 - name: List important directories on remote hosts
   hosts: all
   gather_facts: false
-  become: false
+  become: false  # set to true if any of these directories require sudo
 
   tasks:
-    - name: List contents of user's home directory
+
+    - name: 🏠 List contents of user's home directory
       ansible.builtin.shell: ls -al ~
       register: home_dir
       changed_when: false
 
-    - name: Show home directory contents
+    - name: Show contents of home directory
       ansible.builtin.debug:
         var: home_dir.stdout_lines
 
-    - name: List contents of /etc
+    - name: ⚙️ List contents of /etc
       ansible.builtin.shell: ls -al /etc
       register: etc_dir
       changed_when: false
 
-    - name: Show /etc contents
+    - name: Show contents of /etc
       ansible.builtin.debug:
         var: etc_dir.stdout_lines
 
-    - name: List contents of /var
+    - name: 🗃️ List contents of /var
       ansible.builtin.shell: ls -al /var
       register: var_dir
       changed_when: false
 
-    - name: Show /var contents
+    - name: Show contents of /var
       ansible.builtin.debug:
         var: var_dir.stdout_lines
 
-    - name: List contents of /opt
+    - name: 📦 List contents of /opt
       ansible.builtin.shell: ls -al /opt
       register: opt_dir
       changed_when: false
 
-    - name: Show /opt contents
+    - name: Show contents of /opt
       ansible.builtin.debug:
         var: opt_dir.stdout_lines
 
-    - name: List contents of /usr/local
+    - name: 🧰 List contents of /usr/local
       ansible.builtin.shell: ls -al /usr/local
       register: usr_local_dir
       changed_when: false
 
-    - name: Show /usr/local contents
+    - name: Show contents of /usr/local
       ansible.builtin.debug:
         var: usr_local_dir.stdout_lines

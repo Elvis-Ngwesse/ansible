@@ -1,0 +1,33 @@
+---
+- name: List installed software on remote hosts
+  hosts: all
+  gather_facts: yes  # needed to detect distribution
+  become: false
+
+  tasks:
+
+    - name: 🐧 Detect OS family
+      ansible.builtin.debug:
+        msg: "Detected OS: {{ ansible_distribution }}"
+
+    - name: 📦 List installed packages (Debian/Ubuntu)
+      ansible.builtin.shell: dpkg -l
+      when: ansible_os_family == "Debian"
+      register: debian_packages
+      changed_when: false
+
+    - name: Show installed packages (Debian)
+      ansible.builtin.debug:
+        var: debian_packages.stdout_lines
+      when: ansible_os_family == "Debian"
+
+    - name: 📦 List installed packages (RedHat/CentOS/Amazon)
+      ansible.builtin.shell: rpm -qa
+      when: ansible_os_family == "RedHat"
+      register: redhat_packages
+      changed_when: false
+
+    - name: Show installed packages (RedHat)
+      ansible.builtin.debug:
+        var: redhat_packages.stdout_lines
+      when: ansible_os_family == "RedHat"

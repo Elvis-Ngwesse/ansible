@@ -42,3 +42,4 @@ Enables necessary inventory plugins like gcp_compute
 
 cd inventory-01
 ansible-playbook google/list_directories.yaml
+ansible-playbook google/list_installed_software.yaml

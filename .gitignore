@@ -10,4 +10,4 @@ venv
 *.tmp
 *terraform.tfstate.d/
 *.json
-/inventory-01/google/facts_cache/
+/inventory_gcp/facts_cache/
