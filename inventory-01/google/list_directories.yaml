@@ -1,0 +1,51 @@
+---
+- name: List important directories on remote hosts
+  hosts: all
+  gather_facts: false
+  become: false
+
+  tasks:
+    - name: List contents of user's home directory
+      ansible.builtin.shell: ls -al ~
+      register: home_dir
+      changed_when: false
+
+    - name: Show home directory contents
+      ansible.builtin.debug:
+        var: home_dir.stdout_lines
+
+    - name: List contents of /etc
+      ansible.builtin.shell: ls -al /etc
+      register: etc_dir
+      changed_when: false
+
+    - name: Show /etc contents
+      ansible.builtin.debug:
+        var: etc_dir.stdout_lines
+
+    - name: List contents of /var
+      ansible.builtin.shell: ls -al /var
+      register: var_dir
+      changed_when: false
+
+    - name: Show /var contents
+      ansible.builtin.debug:
+        var: var_dir.stdout_lines
+
+    - name: List contents of /opt
+      ansible.builtin.shell: ls -al /opt
+      register: opt_dir
+      changed_when: false
+
+    - name: Show /opt contents
+      ansible.builtin.debug:
+        var: opt_dir.stdout_lines
+
+    - name: List contents of /usr/local
+      ansible.builtin.shell: ls -al /usr/local
+      register: usr_local_dir
+      changed_when: false
+
+    - name: Show /usr/local contents
+      ansible.builtin.debug:
+        var: usr_local_dir.stdout_lines

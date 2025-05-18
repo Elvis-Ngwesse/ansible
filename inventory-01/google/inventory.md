@@ -17,7 +17,7 @@ run terraform commands found on terraform.md file
 
 
 export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/inventory_gcp/inventory_gcp.yaml
-export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/inventory-01/google/ansible.cfg
+export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/inventory_gcp/ansible.cfg
 
 ansible-inventory --graph
 ansible-inventory --list
@@ -39,3 +39,6 @@ Disables SSH host key checking (for smoother automation)
 Sets the default SSH user and private key for remote connections
 Enables necessary inventory plugins like gcp_compute
 
+
+cd inventory-01
+ansible-playbook google/list_directories.yaml

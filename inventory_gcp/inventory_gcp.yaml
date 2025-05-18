@@ -24,3 +24,7 @@ keyed_groups:
     key: labels
 
 debug: true
+
+compose:
+  ansible_user: "'gcp-user'"
+  ansible_ssh_private_key_file: "'~/.ssh/gcp_key'"
