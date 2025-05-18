@@ -1,0 +1,26 @@
+plugin: gcp_compute
+projects:
+  - new-devops-project-1
+regions:
+  - europe-west2
+auth_kind: serviceaccount
+service_account_file: /Users/elvisngwesse/Desktop/Repositories/ansible/gcp-key.json
+scopes:
+  - https://www.googleapis.com/auth/compute.readonly
+
+filters:
+  - labels.ansible-managed = true
+
+use_hostname_precedence: false
+strict: false
+
+groups:
+  gcp_instances: "'gcp-' + zone"
+  by_zone: "'zone-' + zone"
+  by_prefix: "name.split('-')[0]"
+
+keyed_groups:
+  - prefix: gcp
+    key: labels
+
+debug: true
