@@ -1,0 +1,25 @@
+---
+- name: Update all packages on remote Linux servers
+  hosts: all
+  become: true
+  gather_facts: yes
+
+  tasks:
+    - name: 🔍 Show detected OS
+      debug:
+        msg: "Updating {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+    - name: 🧼 Update package cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: 🧼 Update package cache (RedHat/CentOS/Amazon)
+      yum:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: ✅ Confirm update completion
+      debug:
+        msg: "System update completed on {{ inventory_hostname }}"
