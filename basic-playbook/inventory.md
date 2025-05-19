@@ -1,15 +1,15 @@
 # ------------------------------------------------------------
 # ✅ Python & Ansible prerequisites
 # ------------------------------------------------------------
-
-# Install required Python packages for GCP dynamic inventory
+# Install GCP SDK and API dependencies
 pip install requests google-auth google-api-python-client
 
-# Install Ansible collection for Google Cloud
+# Install AWS SDK for Python
+pip install boto3 botocore
+
+# Install the GCP Ansible collection
 ansible-galaxy collection install google.cloud
 
-# ✅ Ensure boto3 botocore is Enabled
-pip install boto3 botocore
 
 # ------------------------------------------------------------
 # ✅ Enable GCP Compute Engine API
@@ -34,22 +34,24 @@ cd Create-VirtualMachine/google
 # - terraform apply
 
 # ------------------------------------------------------------
-# ✅ Set Ansible configuration for AWS (optional)
+# ✅ Set Ansible configuration for AWS
+# Depending on which cloud provider you're targeting, export the correct inventory and config file paths.
 # ------------------------------------------------------------
-
 export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/inventory_aws_ec2.yaml
 export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/ansible.cfg
 
 # ------------------------------------------------------------
 # ✅ Set Ansible configuration for GCP
+# Depending on which cloud provider you're targeting, export the correct inventory and config file paths.
 # ------------------------------------------------------------
-
 export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/inventory_gcp.yaml
 export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/ansible.cfg
 
 # ------------------------------------------------------------
 # ✅ Test dynamic inventory and connectivity
 # ------------------------------------------------------------
+# aws key
+chmod 400 my-ssh-key.pem
 
 # Show inventory as a host graph
 ansible-inventory --graph
@@ -66,7 +68,6 @@ ansible all -m ping
 # ------------------------------------------------------------
 # ✅ Run Ansible playbooks
 # ------------------------------------------------------------
-
 # List directories on remote hosts
 ansible-playbook basic-playbook/list_directories.yaml
 
@@ -79,7 +80,6 @@ ansible-playbook basic-playbook/update_servers.yaml
 # ------------------------------------------------------------
 # 📁 File: ansible-config/inventory_gcp.yaml
 # ------------------------------------------------------------
-
 # 🔹 GCP dynamic inventory plugin for Ansible
 # - Automatically discovers GCP instances in `new-devops-project-1`
 # - Filters instances with the label `ansible-managed=true`
@@ -89,7 +89,6 @@ ansible-playbook basic-playbook/update_servers.yaml
 # ------------------------------------------------------------
 # 📄 File: ansible.cfg
 # ------------------------------------------------------------
-
 # 🔹 Ansible configuration file
 # - Sets dynamic inventory to inventory_gcp.yaml
 # - Disables SSH host key checking
