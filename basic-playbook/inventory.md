@@ -8,6 +8,9 @@ pip install requests google-auth google-api-python-client
 # Install Ansible collection for Google Cloud
 ansible-galaxy collection install google.cloud
 
+# ✅ Ensure boto3 botocore is Enabled
+pip install boto3 botocore
+
 # ------------------------------------------------------------
 # ✅ Enable GCP Compute Engine API
 # ------------------------------------------------------------
@@ -34,7 +37,7 @@ cd Create-VirtualMachine/google
 # ✅ Set Ansible configuration for AWS (optional)
 # ------------------------------------------------------------
 
-export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/inventory_aws.yaml
+export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/inventory_aws_ec2.yaml
 export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/ansible.cfg
 
 # ------------------------------------------------------------

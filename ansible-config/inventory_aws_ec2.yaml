@@ -1,0 +1,21 @@
+plugin: aws_ec2
+regions:
+  - eu-west-2
+
+aws_profile: default
+
+hostnames:
+  - public-ip-address
+filters:
+  instance-state-name: running
+  tag:AnsibleManaged: true
+
+use_hostname_precedence: false
+strict: false
+
+groups:
+  aws: "'aws-' + availability_zone"
+
+compose:
+  ansible_user: "'ec2-user'"
+  ansible_ssh_private_key_file: '"/Users/elvisngwesse/Desktop/Repositories/ansible/my-ssh-key.pem"'
