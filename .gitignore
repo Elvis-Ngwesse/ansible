@@ -10,4 +10,5 @@ venv
 *.tmp
 *terraform.tfstate.d/
 *.json
-/inventory/facts_cache/
+/ansible-config/facts_cache/
+*.pem

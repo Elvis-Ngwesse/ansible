@@ -34,15 +34,15 @@ cd Create-VirtualMachine/google
 # ✅ Set Ansible configuration for AWS (optional)
 # ------------------------------------------------------------
 
-export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/inventory/inventory_aws.yaml
-export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/inventory/ansible.cfg
+export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/inventory_aws.yaml
+export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/ansible.cfg
 
 # ------------------------------------------------------------
 # ✅ Set Ansible configuration for GCP
 # ------------------------------------------------------------
 
-export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/inventory/inventory_gcp.yaml
-export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/inventory/ansible.cfg
+export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/inventory_gcp.yaml
+export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/ansible.cfg
 
 # ------------------------------------------------------------
 # ✅ Test dynamic inventory and connectivity
@@ -65,16 +65,16 @@ ansible all -m ping
 # ------------------------------------------------------------
 
 # List directories on remote hosts
-ansible-playbook inventory-01/list_directories.yaml
+ansible-playbook basic-playbook/list_directories.yaml
 
 # List installed software
-ansible-playbook inventory-01/list_installed_software.yaml
+ansible-playbook basic-playbook/list_installed_software.yaml
 
 # Update all packages on remote hosts
-ansible-playbook inventory-01/update_servers.yaml
+ansible-playbook basic-playbook/update_servers.yaml
 
 # ------------------------------------------------------------
-# 📁 File: inventory/inventory_gcp.yaml
+# 📁 File: ansible-config/inventory_gcp.yaml
 # ------------------------------------------------------------
 
 # 🔹 GCP dynamic inventory plugin for Ansible
