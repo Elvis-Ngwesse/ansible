@@ -1,0 +1,267 @@
+---
+- name: Install and run useful Linux commands for learning
+  hosts: all
+  become: true  # Use sudo to install packages
+
+  tasks:
+
+    # Install essential packages like htop, ps, net-tools, etc.
+    - name: Install 'htop' for process management
+      ansible.builtin.package:
+        name: htop
+        state: present
+
+    - name: Install 'net-tools' for networking commands (if not installed)
+      ansible.builtin.package:
+        name: net-tools
+        state: present
+
+    - name: Install 'lsof' for listing open files (if not installed)
+      ansible.builtin.package:
+        name: lsof
+        state: present
+
+    - name: Install 'vim' for text editing (if not installed)
+      ansible.builtin.package:
+        name: vim
+        state: present
+
+    # === System Information and Process Management ===
+
+    - name: Run 'top' to show top processes
+      ansible.builtin.command:
+        cmd: top -n 1 -b | head -n 5
+      register: top_output
+      changed_when: false
+
+    - name: Show output of 'top' command
+      ansible.builtin.debug:
+        var: top_output.stdout
+
+    - name: Run 'htop' to display system resource usage (in batch mode)
+      ansible.builtin.command:
+        cmd: htop -b -n 1 | head -n 5  # Add -b for batch mode
+      register: htop_output
+      changed_when: false
+
+    - name: Show output of 'htop' command
+      ansible.builtin.debug:
+        var: htop_output.stdout
+
+    - name: Run 'ps aux' to list running processes with memory usage
+      ansible.builtin.command:
+        cmd: ps aux --sort=-%mem | head -n 10
+      register: ps_output
+      changed_when: false
+
+    - name: Show output of 'ps aux' command
+      ansible.builtin.debug:
+        var: ps_output.stdout
+
+    - name: Run 'vmstat' to show memory and system statistics
+      ansible.builtin.command:
+        cmd: vmstat 1 5
+      register: vmstat_output
+      changed_when: false
+
+    - name: Show output of 'vmstat' command
+      ansible.builtin.debug:
+        var: vmstat_output.stdout
+
+    - name: Run 'free -h' to show memory usage
+      ansible.builtin.command:
+        cmd: free -h
+      register: free_output
+      changed_when: false
+
+    - name: Show output of 'free' command
+      ansible.builtin.debug:
+        var: free_output.stdout
+
+    - name: Run 'uptime' to display system uptime
+      ansible.builtin.command:
+        cmd: uptime
+      register: uptime_output
+      changed_when: false
+
+    - name: Show output of 'uptime' command
+      ansible.builtin.debug:
+        var: uptime_output.stdout
+
+    # === Disk Usage and File Management ===
+
+    - name: Run 'df -h' to show disk usage
+      ansible.builtin.command:
+        cmd: df -h
+      register: df_output
+      changed_when: false
+
+    - name: Show output of 'df' command
+      ansible.builtin.debug:
+        var: df_output.stdout
+
+    - name: Run 'du -sh /home' to show disk usage of the home directory
+      ansible.builtin.command:
+        cmd: du -sh /home
+      register: du_output
+      changed_when: false
+
+    - name: Show output of 'du' command
+      ansible.builtin.debug:
+        var: du_output.stdout
+
+    - name: Run 'lsof' to list open files
+      ansible.builtin.command:
+        cmd: lsof | head -n 10
+      register: lsof_output
+      changed_when: false
+
+    - name: Show output of 'lsof' command
+      ansible.builtin.debug:
+        var: lsof_output.stdout
+
+    - name: Run 'lsblk' to list all block devices
+      ansible.builtin.command:
+        cmd: lsblk
+      register: lsblk_output
+      changed_when: false
+
+    - name: Show output of 'lsblk' command
+      ansible.builtin.debug:
+        var: lsblk_output.stdout
+
+    # === User and Group Management ===
+
+    - name: Run 'whoami' to show the current user
+      ansible.builtin.command:
+        cmd: whoami
+      register: whoami_output
+      changed_when: false
+
+    - name: Show output of 'whoami' command
+      ansible.builtin.debug:
+        var: whoami_output.stdout
+
+    - name: Run 'id' to show user ID and group ID
+      ansible.builtin.command:
+        cmd: id
+      register: id_output
+      changed_when: false
+
+    - name: Show output of 'id' command
+      ansible.builtin.debug:
+        var: id_output.stdout
+
+    - name: Run 'groups' to show groups for the current user
+      ansible.builtin.command:
+        cmd: groups
+      register: groups_output
+      changed_when: false
+
+    - name: Show output of 'groups' command
+      ansible.builtin.debug:
+        var: groups_output.stdout
+
+    - name: Run 'w' to show who is logged in and their activity
+      ansible.builtin.command:
+        cmd: w
+      register: w_output
+      changed_when: false
+
+    - name: Show output of 'w' command
+      ansible.builtin.debug:
+        var: w_output.stdout
+
+    - name: Run 'last' to show the last logins
+      ansible.builtin.command:
+        cmd: last
+      register: last_output
+      changed_when: false
+
+    - name: Show output of 'last' command
+      ansible.builtin.debug:
+        var: last_output.stdout
+
+    # === Networking Commands ===
+
+    - name: Run 'ip a' to show network interfaces
+      ansible.builtin.command:
+        cmd: ip a
+      register: ip_a_output
+      changed_when: false
+
+    - name: Show output of 'ip a' command
+      ansible.builtin.debug:
+        var: ip_a_output.stdout
+
+    - name: Run 'netstat -tuln' to show listening ports
+      ansible.builtin.command:
+        cmd: netstat -tuln
+      register: netstat_output
+      changed_when: false
+
+    - name: Show output of 'netstat' command
+      ansible.builtin.debug:
+        var: netstat_output.stdout
+
+    - name: Run 'ping -c 4 google.com' to test internet connectivity
+      ansible.builtin.command:
+        cmd: ping -c 4 google.com
+      register: ping_output
+      changed_when: false
+
+    - name: Show output of 'ping' command
+      ansible.builtin.debug:
+        var: ping_output.stdout
+
+    - name: Run 'traceroute google.com' to trace the network route
+      ansible.builtin.command:
+        cmd: traceroute google.com
+      register: traceroute_output
+      changed_when: false
+
+    - name: Show output of 'traceroute' command
+      ansible.builtin.debug:
+        var: traceroute_output.stdout
+
+    - name: Run 'ss -tuln' to show socket statistics (like netstat)
+      ansible.builtin.command:
+        cmd: ss -tuln
+      register: ss_output
+      changed_when: false
+
+    - name: Show output of 'ss' command
+      ansible.builtin.debug:
+        var: ss_output.stdout
+
+    # === Disk I/O and Performance Monitoring ===
+
+    - name: Run 'iotop' to monitor disk I/O (requires root access)
+      ansible.builtin.command:
+        cmd: iotop -b -n 5  # Batch mode for 5 iterations
+      register: iotop_output
+      changed_when: false
+
+    - name: Show output of 'iotop' command
+      ansible.builtin.debug:
+        var: iotop_output.stdout
+
+    - name: Run 'sar' to display system activity report
+      ansible.builtin.command:
+        cmd: sar -u 1 5  # CPU usage every 1 second for 5 iterations
+      register: sar_output
+      changed_when: false
+
+    - name: Show output of 'sar' command
+      ansible.builtin.debug:
+        var: sar_output.stdout
+
+    - name: Run 'dstat' to display real-time system resource statistics
+      ansible.builtin.command:
+        cmd: dstat
+      register: dstat_output
+      changed_when: false
+
+    - name: Show output of 'dstat' command
+      ansible.builtin.debug:
+        var: dstat_output.stdout

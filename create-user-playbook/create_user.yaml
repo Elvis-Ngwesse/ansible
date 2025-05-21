@@ -1,0 +1,120 @@
+---
+- name: Full system setup for ansible_user (with teaching examples)
+  hosts: all
+  gather_facts: true
+  become: true  # Become root user (or use sudo) for privileged tasks
+
+  vars:
+    # Define variables for reuse throughout the playbook
+    username: demo_user  # The username to be created and managed on remote servers
+
+    # If the key is for AWS, use the .pem private key; if it's for GCP, use the .pub public key
+    cloud_provider: "aws"  # Choose "aws" or "gcp" based on your cloud provider
+
+    # AWS Key Configuration
+    aws_private_key_path: "~/Desktop/Repositories/ansible/my-ssh-key.pem"  # AWS private key path (for SSH login)
+
+    # GCP Key Configuration
+    gcp_public_key_path: "~/.ssh/gcp_key.pub"  # GCP public key path (to copy to the server)
+
+    # Load the appropriate SSH public key based on the cloud provider
+    ssh_pub_key: "{{ lookup('file', aws_private_key_path) if cloud_provider == 'aws' else lookup('file', gcp_public_key_path) }}"
+
+    # Line to give user passwordless sudo
+    sudoers_line: "{{ username }} ALL=(ALL) NOPASSWD: ALL"  # Adds user to sudoers for passwordless sudo
+
+    # List of basic packages to install on all servers
+    packages_to_install:
+      - git
+      - vim
+      - htop  # A list of useful utilities that will be installed
+
+  tasks:
+
+    # === USER AND SSH SETUP ===
+
+    - name: Ensure the user exists
+      ansible.builtin.user:
+        name: "{{ username }}"  # Username of the user to create
+        shell: /bin/bash  # Set bash shell as default
+        create_home: yes  # Ensure home directory is created
+
+    - name: Ensure .ssh directory exists
+      ansible.builtin.file:
+        path: "/home/{{ username }}/.ssh"  # Path to the .ssh directory in the user's home
+        state: directory  # Ensure it's a directory
+        owner: "{{ username }}"  # Set ownership to the user
+        group: "{{ username }}"  # Set group to the user
+        mode: '0700'  # Secure permissions (read/write/execute only for the owner)
+
+    - name: Set authorized key for SSH login
+      ansible.builtin.copy:
+        content: "{{ ssh_pub_key }}"  # Content is the public SSH key
+        dest: "/home/{{ username }}/.ssh/authorized_keys"  # Destination for authorized_keys
+        owner: "{{ username }}"  # Ownership of the file
+        group: "{{ username }}"  # Group ownership
+        mode: '0600'  # Secure permissions (only the owner can read/write the key)
+
+    - name: Add user to sudoers with NOPASSWD
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ username }}"  # Destination sudoers file
+        content: "{{ sudoers_line }}"  # Content of the sudoers file
+        owner: root  # Ownership should be root
+        group: root  # Group ownership should be root
+        mode: '0440'  # Permissions to ensure the file is readable but not writable
+
+    # === PACKAGE INSTALLATION ===
+
+    - name: Install essential packages
+      ansible.builtin.package:
+        name: "{{ packages_to_install }}"  # Package list defined earlier
+        state: present  # Ensure the packages are installed
+
+    # === SERVICE MANAGEMENT ===
+
+    - name: Ensure SSH is enabled and running
+      ansible.builtin.service:
+        name: sshd  # Name of the SSH service
+        state: started  # Ensure the service is running
+        enabled: true  # Ensure the service starts on boot
+
+    # === SSH CONFIGURATION HARDENING ===
+
+    - name: Disable root login via SSH
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config  # SSH configuration file
+        regexp: '^#?PermitRootLogin'  # Regular expression to match the line
+        line: 'PermitRootLogin no'  # Disallow root login via SSH
+        backup: yes  # Backup the configuration file before making changes
+      notify: Restart SSH  # Notifies the handler to restart SSH service if this task changes anything
+
+    - name: Disable password authentication (for security)
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config  # SSH configuration file
+        regexp: '^#?PasswordAuthentication'  # Regular expression to match the line
+        line: 'PasswordAuthentication no'  # Disable password authentication
+        backup: yes  # Backup the configuration file before making changes
+      notify: Restart SSH  # Notifies the handler to restart SSH service if this task changes anything
+
+    # === TEMPLATING / CONFIG MANAGEMENT ===
+
+    - name: Create a custom motd (Message of the Day)
+      ansible.builtin.template:
+        src: motd.j2  # Path to the Jinja2 template
+        dest: /etc/motd  # Destination of the generated MOTD file
+        owner: root  # Ownership of the file
+        group: root  # Group ownership
+        mode: '0644'  # Permissions (readable by everyone, writable only by root)
+
+    # Print instance names at the end
+    - name: Print instance names
+      ansible.builtin.debug:
+        msg: "Instance name: {{ inventory_hostname }}"
+
+  # === HANDLERS ===
+
+  handlers:
+    - name: Restart SSH
+      ansible.builtin.service:
+        name: sshd  # Name of the SSH service
+        state: restarted  # Ensure the service is restarted to apply new configurations
