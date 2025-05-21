@@ -1,0 +1,88 @@
+---
+- name: Install Docker and MySQL container on GCP and AWS instances
+  hosts: all  # Runs on all hosts in the inventory (AWS and GCP instances)
+  become: yes  # Use sudo to perform tasks as root
+  vars_files:
+    - vault_secrets.yml  # Include the encrypted vault file with credentials
+
+  tasks:
+    - name: Install necessary dependencies (apt)
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"  # For Ubuntu/Debian systems
+
+    - name: Add Docker's official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker APT repository for Ubuntu 20.04 (Focal)
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker (for Ubuntu/Debian)
+      apt:
+        name: docker-ce
+        state: latest
+      when: ansible_os_family == "Debian"
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull MySQL Docker image
+      docker_image:
+        name: mysql
+        tag: "latest"
+        source: pull
+
+    - name: Run MySQL container
+      docker_container:
+        name: mysql_server
+        image: mysql:latest
+        state: started
+        restart_policy: always
+        exposed_ports:
+          - "3306"
+        published_ports:
+          - "3306:3306"
+        env:
+          MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+          MYSQL_DATABASE: "{{ mysql_db_name }}"
+          MYSQL_USER: "{{ mysql_db_user }}"
+          MYSQL_PASSWORD: "{{ mysql_db_password }}"
+        volumes:
+          - mysql_data:/var/lib/mysql
+
+    - name: Wait for MySQL to be ready
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: 3306
+        state: started
+        delay: 10
+        timeout: 60
+
+    - name: Login to MySQL container and execute query
+      community.mysql.mysql_db:
+        login_user: "{{ mysql_db_user }}"
+        login_password: "{{ mysql_db_password }}"
+        login_host: "{{ ansible_host }}"
+        name: "{{ mysql_db_name }}"
+        state: present
+        query: "SELECT DATABASE();"
+      register: mysql_query_result
+
+    - name: Show MySQL connection result
+      debug:
+        msg: "MySQL is connected to database: {{ mysql_query_result.query_result }}"

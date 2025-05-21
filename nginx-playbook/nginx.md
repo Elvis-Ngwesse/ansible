@@ -1,7 +1,6 @@
 Then visit:
 curl http://YOUR.SERVER.IP:8080
 
-
 📘 NGINX Configuration Notes
 
 🔧 1. Main Config File
