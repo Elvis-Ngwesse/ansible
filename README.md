@@ -100,6 +100,7 @@ ansible-playbook commands-playbook/unix_commands.yaml
 # Nginx commands
 ansible-playbook nginx-playbook/nginx.yaml
 
+
 # ------------------------------------------------------------
 # 📁 File: ansible-config/inventory_gcp.yaml
 # ------------------------------------------------------------
