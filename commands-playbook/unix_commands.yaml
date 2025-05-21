@@ -1,5 +1,5 @@
 ---
-- name: Install and run useful Linux commands for learning
+- name: Install and run useful Linux commands
   hosts: all
   become: true  # Use sudo to install packages
 
@@ -29,7 +29,7 @@
     # === System Information and Process Management ===
 
     - name: Run 'top' to show top processes
-      ansible.builtin.command:
+      ansible.builtin.shell:
         cmd: top -n 1 -b | head -n 5
       register: top_output
       changed_when: false
@@ -39,7 +39,7 @@
         var: top_output.stdout
 
     - name: Run 'htop' to display system resource usage (in batch mode)
-      ansible.builtin.command:
+      ansible.builtin.shell:
         cmd: htop -b -n 1 | head -n 5  # Add -b for batch mode
       register: htop_output
       changed_when: false
@@ -49,7 +49,7 @@
         var: htop_output.stdout
 
     - name: Run 'ps aux' to list running processes with memory usage
-      ansible.builtin.command:
+      ansible.builtin.shell:
         cmd: ps aux --sort=-%mem | head -n 10
       register: ps_output
       changed_when: false
@@ -111,7 +111,7 @@
         var: du_output.stdout
 
     - name: Run 'lsof' to list open files
-      ansible.builtin.command:
+      ansible.builtin.shell:
         cmd: lsof | head -n 10
       register: lsof_output
       changed_when: false
@@ -214,16 +214,6 @@
       ansible.builtin.debug:
         var: ping_output.stdout
 
-    - name: Run 'traceroute google.com' to trace the network route
-      ansible.builtin.command:
-        cmd: traceroute google.com
-      register: traceroute_output
-      changed_when: false
-
-    - name: Show output of 'traceroute' command
-      ansible.builtin.debug:
-        var: traceroute_output.stdout
-
     - name: Run 'ss -tuln' to show socket statistics (like netstat)
       ansible.builtin.command:
         cmd: ss -tuln
@@ -236,6 +226,11 @@
 
     # === Disk I/O and Performance Monitoring ===
 
+    - name: Ensure 'iotop' is installed
+      ansible.builtin.package:
+        name: iotop
+        state: present
+
     - name: Run 'iotop' to monitor disk I/O (requires root access)
       ansible.builtin.command:
         cmd: iotop -b -n 5  # Batch mode for 5 iterations
@@ -245,6 +240,11 @@
     - name: Show output of 'iotop' command
       ansible.builtin.debug:
         var: iotop_output.stdout
+
+    - name: Ensure 'sysstat' package is installed (for sar command)
+      ansible.builtin.package:
+        name: sysstat
+        state: present
 
     - name: Run 'sar' to display system activity report
       ansible.builtin.command:
@@ -256,12 +256,12 @@
       ansible.builtin.debug:
         var: sar_output.stdout
 
-    - name: Run 'dstat' to display real-time system resource statistics
+    - name: Run 'vmstat' to show memory and system statistics
       ansible.builtin.command:
-        cmd: dstat
-      register: dstat_output
+        cmd: vmstat 1 5
+      register: vmstat_output
       changed_when: false
 
-    - name: Show output of 'dstat' command
+    - name: Show output of 'vmstat' command
       ansible.builtin.debug:
-        var: dstat_output.stdout
+        var: vmstat_output.stdout
