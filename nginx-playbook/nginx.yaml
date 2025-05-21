@@ -1,0 +1,59 @@
+---
+- name: Install and configure Nginx
+  hosts: all
+  become: true
+
+  vars:
+    nginx_port: 8080  # Easily change the port across environments
+    welcome_message: "Welcome to the Nginx Server!"  # Message for the custom HTML
+
+  tasks:
+    # 1. Install Nginx package
+    - name: Install Nginx
+      ansible.builtin.package:
+        name: nginx
+        state: present
+
+    # 2. Copy the custom nginx configuration
+    - name: Copy custom nginx.conf file
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+      notify: Restart nginx
+
+    # 3. Ensure document root exists
+    - name: Ensure /var/www/html directory exists
+      ansible.builtin.file:
+        path: /var/www/html
+        state: directory
+        mode: '0755'
+
+    # 4. Deploy a custom index.html page
+    - name: Create custom welcome page
+      ansible.builtin.template:
+        src: welcome_message.html.j2
+        dest: /var/www/html/index.html
+      notify: Restart nginx
+
+    # 5. Allow traffic on NGINX port (UFW for Ubuntu/Debian)
+    - name: Allow HTTP traffic on custom port {{ nginx_port }}
+      ansible.builtin.ufw:
+        rule: allow
+        port: "{{ nginx_port }}"
+        proto: tcp
+      when: ansible_facts.os_family == "Debian"
+
+    # 6. Verify Nginx is running
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Debug nginx status
+      debug:
+        var: ansible_facts.services['nginx.service'].state
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: restarted
+        enabled: true

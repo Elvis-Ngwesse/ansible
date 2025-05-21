@@ -1,0 +1,27 @@
+# Custom Nginx Configuration
+
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    server {
+        listen {{ nginx_port }} default_server;
+        server_name _;
+
+        root /var/www/html;
+        index index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        access_log /var/log/nginx/access.log;
+        error_log /var/log/nginx/error.log;
+    }
+}
