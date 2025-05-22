@@ -1,0 +1,15 @@
+
+  - name: Gather cloud provider-specific facts
+    ansible.builtin.debug:
+      msg: "This machine is running on {{ ansible_facts.cloud_provider }}"
+
+  - name: Restart Apache service on AWS/GCP instances
+    ansible.builtin.service:
+      name: "{{ apache_service }}"
+      state: restarted
+    when: "'aws' in ansible_facts.cloud_provider or 'gcp' in ansible_facts.cloud_provider"
+
+  - name: Restart Apache
+    ansible.builtin.service:
+      name: "{{ apache_service }}"
+      state: restarted

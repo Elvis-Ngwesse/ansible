@@ -1,0 +1,6 @@
+---
+- name: Install and configure Apache on AWS and GCP
+  hosts: all
+  gather_facts: true
+  roles:
+    - apache_role

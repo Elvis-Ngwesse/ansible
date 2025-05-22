@@ -1,0 +1,155 @@
+---
+- name: Install Apache
+  ansible.builtin.package:
+    name: "{{ apache_package }}"
+    state: present
+  register: apache_install
+
+- name: Debug Apache installation
+  ansible.builtin.debug:
+    msg: "Apache package installation result: {{ apache_install }}"
+
+- name: Apache Installation Message
+  ansible.builtin.debug:
+    msg: "Apache has been installed successfully on {{ inventory_hostname }}."
+
+# === Update Listen Port ===
+
+- name: Update Listen Port in Apache Configuration (Debian-based)
+  ansible.builtin.replace:
+    path: /etc/apache2/ports.conf
+    regexp: '^Listen\s+.*'
+    replace: 'Listen {{ apache_listen_port }}'
+  when: ansible_facts['os_family'] == "Debian"
+  register: listen_debian_change
+
+- name: Debug Listen Port change on Debian
+  ansible.builtin.debug:
+    msg: "Debian Listen port update: {{ listen_debian_change }}"
+
+- name: Apache Listen Port Update Message (Debian)
+  ansible.builtin.debug:
+    msg: "Apache Listen port updated to {{ apache_listen_port }} on Debian-based system."
+
+- name: Update Listen Port in Apache Configuration (RedHat-based)
+  ansible.builtin.replace:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen\s+.*'
+    replace: 'Listen {{ apache_listen_port }}'
+  when: ansible_facts['os_family'] == "RedHat"
+  register: listen_redhat_change
+
+- name: Debug Listen Port change on RedHat
+  ansible.builtin.debug:
+    msg: "RedHat Listen port update: {{ listen_redhat_change }}"
+
+- name: Apache Listen Port Update Message (RedHat)
+  ansible.builtin.debug:
+    msg: "Apache Listen port updated to {{ apache_listen_port }} on RedHat-based system."
+
+# === Update VirtualHost Port ===
+
+- name: Update VirtualHost Port on Debian-based systems
+  ansible.builtin.replace:
+    path: /etc/apache2/sites-available/000-default.conf
+    regexp: '(<VirtualHost\s+\*:)(\d+)>'
+    replace: '<VirtualHost *:{{ apache_listen_port }}>'
+  when: ansible_facts['os_family'] == "Debian"
+  register: vhost_debian_change
+
+- name: Debug VirtualHost change on Debian
+  ansible.builtin.debug:
+    msg: "Debian VirtualHost port update: {{ vhost_debian_change }}"
+
+- name: Apache VirtualHost Port Update Message (Debian)
+  ansible.builtin.debug:
+    msg: "Apache VirtualHost port updated to {{ apache_listen_port }} on Debian-based system."
+
+- name: Update VirtualHost Port on RedHat-based systems
+  ansible.builtin.replace:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '(<VirtualHost\s+\*:)(\d+)>'
+    replace: '<VirtualHost *:{{ apache_listen_port }}>'
+  when: ansible_facts['os_family'] == "RedHat"
+  register: vhost_redhat_change
+
+- name: Debug VirtualHost change on RedHat
+  ansible.builtin.debug:
+    msg: "RedHat VirtualHost port update: {{ vhost_redhat_change }}"
+
+- name: Apache VirtualHost Port Update Message (RedHat)
+  ansible.builtin.debug:
+    msg: "Apache VirtualHost port updated to {{ apache_listen_port }} on RedHat-based system."
+
+# === Ensure Apache is Running ===
+
+- name: Ensure Apache is started and enabled
+  ansible.builtin.service:
+    name: "{{ apache_service }}"
+    state: started
+    enabled: true
+  register: apache_service_state
+
+- name: Debug Apache service state
+  ansible.builtin.debug:
+    msg: "Apache service state after start attempt: {{ apache_service_state }}"
+
+- name: Apache Service Start Message
+  ansible.builtin.debug:
+    msg: "Apache service has been successfully started and enabled on {{ inventory_hostname }}."
+
+# === Create Welcome Page ===
+
+- name: Create Welcome Page HTML (Debian-based)
+  ansible.builtin.copy:
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Welcome to Apache</title>
+      </head>
+      <body>
+          <h1>Welcome to Apache!</h1>
+          <p>Your Apache web server is running successfully!</p>
+      </body>
+      </html>
+    dest: /var/www/html/index.html
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Create Welcome Page HTML (RedHat-based)
+  ansible.builtin.copy:
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Welcome to Apache</title>
+      </head>
+      <body>
+          <h1>Welcome to Apache!</h1>
+          <p>Your Apache web server is running successfully!</p>
+      </body>
+      </html>
+    dest: /var/www/html/index.html
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Debug Welcome Page Creation
+  ansible.builtin.debug:
+    msg: "Welcome page created successfully on {{ inventory_hostname }}."
+
+# === Restart Apache if Config Changed ===
+
+- name: Restart Apache service (Debian-based)
+  ansible.builtin.service:
+    name: "{{ apache_service }}"
+    state: restarted
+  when: ansible_facts['os_family'] == "Debian" and (listen_debian_change.changed or vhost_debian_change.changed)
+
+- name: Restart Apache service (RedHat-based)
+  ansible.builtin.service:
+    name: "{{ apache_service }}"
+    state: restarted
+  when: ansible_facts['os_family'] == "RedHat" and (listen_redhat_change.changed or vhost_redhat_change.changed)
+
+- name: Apache Service Restart Message
+  ansible.builtin.debug:
+    msg: "Apache service has been restarted due to configuration changes on {{ inventory_hostname }}."

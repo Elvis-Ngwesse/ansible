@@ -100,6 +100,18 @@ ansible-playbook commands-playbook/unix_commands.yaml
 # Nginx commands
 ansible-playbook nginx-playbook/nginx.yaml
 
+# Vault commands
+ansible-playbook vault-playbook/vault-secret.yaml --ask-vault-pass
+ansible-playbook vault-playbook/vault-secret.yaml \
+--vault-password-file=~/Desktop/Repositories/ansible/vault-playbook/vault_password.txt
+
+ansible-playbook vault-playbook/install_mysql_docker.yaml --ask-vault-pass
+ansible-playbook vault-playbook/install_mysql_docker.yaml \
+--vault-password-file=~/Desktop/Repositories/ansible/vault-playbook/vault_password.txt
+
+# Nginx commands
+ansible-playbook roles-playbook/roles.yaml
+
 
 # ------------------------------------------------------------
 # 📁 File: ansible-config/inventory_gcp.yaml

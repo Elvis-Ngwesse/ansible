@@ -1,0 +1,17 @@
+# defaults/main.yml
+apache_package_map:
+  RedHat: httpd
+  Amazon: httpd
+  Debian: apache2
+  Ubuntu: apache2
+
+apache_service_map:
+  RedHat: httpd
+  Amazon: httpd
+  Debian: apache2
+  Ubuntu: apache2
+
+apache_package: "{{ apache_package_map[ansible_facts['os_family']] | default('apache2') }}"
+apache_service: "{{ apache_service_map[ansible_facts['os_family']] | default('apache2') }}"
+
+apache_listen_port: 8085
