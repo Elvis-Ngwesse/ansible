@@ -1,5 +1,5 @@
 ---
-- name: Full system setup for ansible_user (with teaching examples)
+- name: Full system setup for ansible_user
   hosts: all
   gather_facts: true
   become: true  # Become root user (or use sudo) for privileged tasks

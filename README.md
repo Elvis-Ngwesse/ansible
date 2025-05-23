@@ -45,16 +45,16 @@ cd Create-VirtualMachine/google
 # Depending on which cloud provider you're targeting, export the correct inventory and config file paths.
 # Make sure to run command in same directory as playbook command to be run
 # ------------------------------------------------------------
-export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/inventory_aws_ec2.yaml
-export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/ansible.cfg
+export ANSIBLE_INVENTORY=~/Desktop/Repositories/ansible/ansible-config/inventory_aws_ec2.yaml
+export ANSIBLE_CONFIG=~/Desktop/Repositories/ansible/ansible-config/ansible.cfg
 
 # ------------------------------------------------------------
 # ✅ Set Ansible configuration for GCP
 # Depending on which cloud provider you're targeting, export the correct inventory and config file paths.
 # Make sure to run command in same directory as playbook command to be run
 # ------------------------------------------------------------
-export ANSIBLE_INVENTORY=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/inventory_gcp.yaml
-export ANSIBLE_CONFIG=/Users/elvisngwesse/Desktop/Repositories/ansible/ansible-config/ansible.cfg
+export ANSIBLE_INVENTORY=~/Desktop/Repositories/ansible/ansible-config/inventory_gcp.yaml
+export ANSIBLE_CONFIG=~/Desktop/Repositories/ansible/ansible-config/ansible.cfg
 
 # ------------------------------------------------------------
 # ✅ Remove cache before executing or switching between providers
@@ -93,6 +93,7 @@ ansible-playbook basic-playbook/update_servers.yaml
 
 # Create user
 ansible-playbook create-user-playbook/create_user.yaml
+ansible-playbook create-user-playbook/create_user.yml
 
 # Display commands
 ansible-playbook commands-playbook/unix_commands.yaml

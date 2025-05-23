@@ -1,0 +1,77 @@
+---
+- name: Configure cloud users
+  hosts: all
+  become: yes
+  gather_facts: true
+
+  vars:
+    user: kube_user
+
+  tasks:
+
+    ##################################
+    # Update packages (OS-aware)
+    ##################################
+    - name: Update package cache (Debian)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Update package cache (RedHat)
+      yum:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    ##################################
+    # Create user
+    ##################################
+    - name: Create the user account
+      user:
+        name: "{{ user }}"
+        append: yes
+        state: present
+        createhome: yes
+        shell: /bin/bash
+
+    ##################################
+    # Add user to sudo
+    ##################################
+    - name: Allow user to use sudo without password
+      lineinfile:
+        dest: /etc/sudoers
+        line: '{{ user }} ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    ##################################
+    # Add SSH keys based on cloud provider
+    ##################################
+    - name: Set up GCP SSH key
+      authorized_key:
+        user: "{{ user }}"
+        key: "{{ lookup('file', '~/.ssh/gcp_key.pub') }}"
+      when:
+        - "'gcp_instances' in group_names"
+        - ansible_os_family in ['Debian', 'RedHat']
+
+    - name: Set up AWS SSH key
+      authorized_key:
+        user: "{{ user }}"
+        key: "{{ lookup('file', '~/Desktop/Repositories/ansible/my-ssh-key.pem') }}"
+      when: false
+#      when:
+#        - "'aws_ec2' in group_names"
+#        - ansible_os_family in ['Debian', 'RedHat']
+#        - not skip_aws_ssh_key | default(false)
+
+    - name: Show group names for each host
+      debug:
+        var: group_names
+
+    ##################################
+    # Show facts for verification
+    ##################################
+    - name: Display OS and IP
+      debug:
+        msg: "Host {{ inventory_hostname }} is running {{ ansible_distribution }} ({{ ansible_os_family }}) with IP {{ ansible_default_ipv4.address }}"

@@ -5,10 +5,11 @@
 # For GCP, use your GCP private key file (.pem or .pub depending on the setup).
 
 # SSH into a GCP server as demo_user
-ssh -i ~/.ssh/gcp_key demo_user@your_instance_ip
+ssh -i ~/.ssh/gcp_key your-user@your_instance_ip
 
 # SSH into an AWS EC2 server as ec2-user, then switch to demo_user
 ssh -i ~/Desktop/Repositories/ansible/my-ssh-key.pem ec2-user@<your-aws-instance-ip>
+ssh -i ~/Desktop/Repositories/ansible/my-ssh-key.pem kube_user@<your-aws-instance-ip>
 
 # Once logged into the AWS EC2 instance, switch to demo_user using sudo
 # This assumes 'demo_user' was successfully created using the Ansible playbook and has the necessary sudo privileges.
