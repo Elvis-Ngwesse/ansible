@@ -2,21 +2,17 @@
 #######################################################
 # Create kube_user
 #######################################################
-- Add digitalocean.yaml or hosts
-- Add ansible.cfg file
-- Make sure ansible_user=root in digitalocean.yaml file
-- Run create_users_playbook.yaml play
-- ./create_users_playbook.yaml
+- ansible-playbook create-user-playbook/create_user.yml
 
 #######################################################
-# Install Docker and its dependent components
+# Install K3 dependencies
 #######################################################
-- ./kubernetes_plabook.yaml
-- 
+- ansible-playbook kubernetes-playbook/k3_dependencies.yaml
+
 #######################################################
-# Initialize your Master node with Kubernetes
+# Initialize your Master node
 #######################################################
-- ./add_master_playbook.yaml
+- ansible-playbook kubernetes-playbook/init_master.yaml
 
 #######################################################
 # Connect your worker nodes to the master node

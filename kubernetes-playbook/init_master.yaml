@@ -1,20 +1,17 @@
-#!/usr/bin/env -S ansible-playbook -K
-# NOTE: Don't provide the playbook filename in the shebang. It is added automatically.
 ---
 
-- name: Create Users playbook
-  hosts: master
+- name: Initialize master
+  hosts: tag__items___master____ping____ssh__
   remote_user: root
   become: yes
   become_user: root
   gather_facts: true
 
-  tasks:
+  vars:
+    kube_user: kube_user
+    kube_user_home: "/home/kube_user"
 
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-        upgrade: dist #  dist, full, no, safe, yes
+  tasks:
 
     ##################################
     # Empty file for Kubeadm configuring
@@ -50,27 +47,21 @@
           enforceNodeAllocatable:
           - pods
 
-
     - name: Check if /var/lib/etcd exists
-      ansible.builtin.command:
-        cmd: test -d /var/lib/etcd
+      command: test -d /var/lib/etcd
       register: etcd_dir
       ignore_errors: true
 
-    - name: Debug etcd_dir to confirm structure
-      ansible.builtin.debug:
-        var: etcd_dir
-
-    - name: Clear the contents of /var/lib/etcd if it exists and is the primary master
-      ansible.builtin.file:
+    - name: Clear the contents of /var/lib/etcd if it exists
+      file:
         path: /var/lib/etcd
         state: absent
       when:
         - etcd_dir is defined
         - etcd_dir.rc == 0
 
-    - name: Recreate /var/lib/etcd directory on primary master
-      ansible.builtin.file:
+    - name: Recreate /var/lib/etcd directory
+      file:
         path: /var/lib/etcd
         state: directory
         mode: '0700'
@@ -79,72 +70,75 @@
     # Initialize the cluster
     ##################################
     - name: Initialize the cluster
-      shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
+      shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --ignore-preflight-errors=Mem >> cluster_initialized.log 2>&1
       args:
-        chdir: /home/kube_user
+        chdir: "{{ kube_user_home }}"
         creates: cluster_initialized.log
 
-    - name: Initialize admin cluster
-      command: "kubeadm init --pod-network-cidr=10.244.0.0/16"
-      args:
-        creates: /etc/kubernetes/admin.conf # skip this task if the file already exists
-      register: kube_init
-      failed_when: "'error' in kube_init.stdout_lines"
-
-    - name: show kube init info
-      debug:
-        var: kube_init
-
-    ##################################
-    # Create .kube directory
-    ##################################
     - name: Create .kube directory
-      become: yes
-      become_user: kube_user
+      become_user: "{{ kube_user }}"
       file:
-        path: $HOME/.kube
+        path: "{{ kube_user_home }}/.kube"
         state: directory
-        mode: 0755
+        mode: '0755'
 
-    ##################################
-    # Copy admin.conf
-    ##################################
     - name: Copy admin.conf to User's kube config
       copy:
         src: /etc/kubernetes/admin.conf
-        dest: /home/kube_user/.kube/config
+        dest: "{{ kube_user_home }}/.kube/config"
         remote_src: yes
-        owner: kube_user
+        owner: "{{ kube_user }}"
+        group: "{{ kube_user }}"
+        mode: '0644'
 
     ##################################
-    # Install Pod Network
+    # Install Pod Network - Flannel
     ##################################
-    - name: Install Pod Network
-      become: yes
+    - name: Install Flannel Pod Network
+      become_user: "{{ kube_user }}"
       shell: |
         export KUBECONFIG=/etc/kubernetes/admin.conf
-        kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
+        kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log 2>&1
       args:
-        chdir: $HOME
+        chdir: "{{ kube_user_home }}"
         creates: pod_network_setup.log
 
-
-    - name: get calico networking
+    ##################################
+    # Download and apply Calico network manifest
+    ##################################
+    - name: Download Calico network manifest
       get_url:
         url: https://projectcalico.docs.tigera.io/manifests/calico.yaml
-        dest: "/home/kube_user/calico.yaml"
+        dest: "{{ kube_user_home }}/calico.yaml"
 
-    - name: apply calico networking
+    - name: Set permissions on Calico manifest
+      file:
+        path: "{{ kube_user_home }}/calico.yaml"
+        mode: '0644'
+        owner: "{{ kube_user }}"
+        group: "{{ kube_user }}"
+
+    - name: Apply Calico network manifest
       become: yes
-      become_user: kube_user
-      command: kubectl apply -f "/home/kube_user/calico.yaml"
+      become_user: "{{ kube_user }}"
+      command: kubectl apply -f "{{ kube_user_home }}/calico.yaml"
 
-    - name: get dashboard
+    ##################################
+    # Download and apply Kubernetes Dashboard manifest
+    ##################################
+    - name: Download Kubernetes Dashboard manifest
       get_url:
         url: https://raw.githubusercontent.com/kubernetes/dashboard/v2.5.0/aio/deploy/recommended.yaml
-        dest: "/home/kube_user/dashboard.yaml"
+        dest: "{{ kube_user_home }}/dashboard.yaml"
 
-    - name: apply dashboard
+    - name: Set permissions on Dashboard manifest
+      file:
+        path: "{{ kube_user_home }}/dashboard.yaml"
+        mode: '0644'
+        owner: "{{ kube_user }}"
+        group: "{{ kube_user }}"
+
+    - name: Apply Kubernetes Dashboard manifest
       become: yes
-      become_user: kube_user
-      command: kubectl apply -f "/home/kube_user/dashboard.yaml"
+      become_user: "{{ kube_user }}"
+      command: kubectl apply -f "{{ kube_user_home }}/dashboard.yaml"

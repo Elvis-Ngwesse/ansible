@@ -22,6 +22,11 @@ groups:
 keyed_groups:
   - prefix: gcp
     key: labels
+  - prefix: role
+    key: labels.role
+  - prefix: tag_
+    key: tags
+    split_groups: true
 
 debug: true
 

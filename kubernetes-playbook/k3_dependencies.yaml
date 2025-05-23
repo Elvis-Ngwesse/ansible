@@ -1,8 +1,6 @@
-#!/usr/bin/env -S ansible-playbook -K
-# NOTE: Don't provide the playbook filename in the shebang. It is added automatically
 ---
 
-- name: Install k3 playbook
+- name: Install k3 Dependencies
   hosts: all
   remote_user: root
   become: yes
@@ -10,14 +8,6 @@
   gather_facts: true
 
   tasks:
-
-    ##################################
-    # Updates
-    ##################################
-    - name: Updates
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
 
     ##################################
     # Disable swap
@@ -77,6 +67,14 @@
         name: apt-transport-https
         state: present
 
+    ##################################
+    # Ensure keyrings directory exists BEFORE downloading keys
+    ##################################
+    - name: Ensure /etc/apt/keyrings exists
+      file:
+         path: /etc/apt/keyrings
+         state: directory
+         mode: '0755'
     ##################################
     # Install Docker
     ##################################
