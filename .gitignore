@@ -12,3 +12,4 @@ venv
 *.json
 /ansible-config/facts_cache/
 *.pem
+kubeconfig
