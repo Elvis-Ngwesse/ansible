@@ -17,13 +17,34 @@
 #######################################################
 # Connect your worker nodes to the master node
 #######################################################
-- ./add_worker_playbook.yaml
+- ansible-playbook kubernetes-playbook/add_workers.yaml
 
 #######################################################
 # Login to the master node as kube_user
 #######################################################
+- ssh -i ~/.ssh/gcp_key kube_user@master_ip
 - kubectl get nodes
 - kubectl get all -A
+
+#######################################################
+# Kubernetes Dashboard
+#######################################################
+- Run file
+    - ansible-playbook kubernetes-playbook/dashboard.yaml
+- Copy kubeconfig file
+    - ansible master-ip -m fetch -a "src=/home/kube_user/.kube/config dest=./kubeconfig flat=yes"
+    - remover this two lines
+         certificate-authority-data: LSO********
+         server: https://10.0.1.3:6443
+    - replace with
+         insecure-skip-tls-verify: true
+         server: https://master-ip:6443
+- Download lens
+    - https://github.com/lensapp/lens/releases/tag/v2024.1.300751-latest
+    - add kubeconfig downloaded to lens config
+
+
+
 
 #######################################################
 #######################################################
@@ -52,17 +73,7 @@
     - Deploy sample nginx app
         - ./deploy_nginx_playbook.yml
 
-#######################################################
-# Kubernetes Dashboard
-#######################################################
-- Run file
-    - ./dashboard_playbook.yaml
-- Run command on shell (localhost)
-    - ssh -L 8001:127.0.0.1:8001 kube_user@master_ip
-      kubectl proxy
-- Navigate to the dashboard page from a web browser on your local machine
-    - http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-    - 
+
 #######################################################
 # Uninstall NFS-Server
 #######################################################

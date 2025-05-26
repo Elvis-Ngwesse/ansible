@@ -1,11 +1,8 @@
----
-
-- name: Initialize master
+- name: Initialize master node
   hosts: tag__items___master____ping____ssh__
   remote_user: root
   become: yes
-  become_user: root
-  gather_facts: true
+  gather_facts: yes
 
   vars:
     kube_user: kube_user
@@ -13,19 +10,19 @@
 
   tasks:
 
-    ##################################
-    # Empty file for Kubeadm configuring
-    ##################################
-    - name: Create an Empty file for Kubeadm configuring
+    - name: Fail if CPU cores are less than 2 (Kubernetes requirement)
+      assert:
+        that:
+          - ansible_processor_vcpus >= 2
+        fail_msg: "Kubernetes requires at least 2 CPU cores. Current: {{ ansible_processor_vcpus }}"
+
+    - name: Create empty kubeadm config file
       copy:
         content: ""
         dest: /etc/kubernetes/kubeadm-config.yaml
-        force: no
+        force: yes
 
-    ##################################
-    # Configure container runtime
-    ##################################
-    - name: Configure Kubernetes container runtime
+    - name: Configure Kubernetes container runtime in kubeadm config
       blockinfile:
         path: /etc/kubernetes/kubeadm-config.yaml
         block: |
@@ -48,17 +45,15 @@
           - pods
 
     - name: Check if /var/lib/etcd exists
-      command: test -d /var/lib/etcd
+      stat:
+        path: /var/lib/etcd
       register: etcd_dir
-      ignore_errors: true
 
-    - name: Clear the contents of /var/lib/etcd if it exists
+    - name: Remove /var/lib/etcd if it exists
       file:
         path: /var/lib/etcd
         state: absent
-      when:
-        - etcd_dir is defined
-        - etcd_dir.rc == 0
+      when: etcd_dir.stat.exists
 
     - name: Recreate /var/lib/etcd directory
       file:
@@ -66,23 +61,21 @@
         state: directory
         mode: '0700'
 
-    ##################################
-    # Initialize the cluster
-    ##################################
-    - name: Initialize the cluster
-      shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --ignore-preflight-errors=Mem >> cluster_initialized.log 2>&1
+    - name: Initialize Kubernetes cluster with kubeadm
+      shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log 2>&1
       args:
         chdir: "{{ kube_user_home }}"
         creates: cluster_initialized.log
 
-    - name: Create .kube directory
-      become_user: "{{ kube_user }}"
+    - name: Create .kube directory for user
       file:
         path: "{{ kube_user_home }}/.kube"
         state: directory
         mode: '0755'
+        owner: "{{ kube_user }}"
+        group: "{{ kube_user }}"
 
-    - name: Copy admin.conf to User's kube config
+    - name: Copy admin.conf to user's kube config
       copy:
         src: /etc/kubernetes/admin.conf
         dest: "{{ kube_user_home }}/.kube/config"
@@ -91,9 +84,6 @@
         group: "{{ kube_user }}"
         mode: '0644'
 
-    ##################################
-    # Install Pod Network - Flannel
-    ##################################
     - name: Install Flannel Pod Network
       become_user: "{{ kube_user }}"
       shell: |
@@ -102,43 +92,31 @@
       args:
         chdir: "{{ kube_user_home }}"
         creates: pod_network_setup.log
+      register: flannel_output
+      retries: 5
+      delay: 15
+      until: flannel_output.rc == 0
 
-    ##################################
-    # Download and apply Calico network manifest
-    ##################################
     - name: Download Calico network manifest
       get_url:
         url: https://projectcalico.docs.tigera.io/manifests/calico.yaml
         dest: "{{ kube_user_home }}/calico.yaml"
-
-    - name: Set permissions on Calico manifest
-      file:
-        path: "{{ kube_user_home }}/calico.yaml"
         mode: '0644'
         owner: "{{ kube_user }}"
         group: "{{ kube_user }}"
 
     - name: Apply Calico network manifest
-      become: yes
       become_user: "{{ kube_user }}"
       command: kubectl apply -f "{{ kube_user_home }}/calico.yaml"
 
-    ##################################
-    # Download and apply Kubernetes Dashboard manifest
-    ##################################
     - name: Download Kubernetes Dashboard manifest
       get_url:
         url: https://raw.githubusercontent.com/kubernetes/dashboard/v2.5.0/aio/deploy/recommended.yaml
         dest: "{{ kube_user_home }}/dashboard.yaml"
-
-    - name: Set permissions on Dashboard manifest
-      file:
-        path: "{{ kube_user_home }}/dashboard.yaml"
         mode: '0644'
         owner: "{{ kube_user }}"
         group: "{{ kube_user }}"
 
     - name: Apply Kubernetes Dashboard manifest
-      become: yes
       become_user: "{{ kube_user }}"
       command: kubectl apply -f "{{ kube_user_home }}/dashboard.yaml"

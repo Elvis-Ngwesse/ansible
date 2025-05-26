@@ -45,7 +45,29 @@
         validate: 'visudo -cf %s'
 
     ##################################
-    # Add SSH keys based on cloud provider
+    # Ensure .ssh directory exists
+    ##################################
+    - name: Ensure .ssh directory exists
+      file:
+        path: "/home/{{ user }}/.ssh"
+        state: directory
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: '0700'
+
+    ##################################
+    # Copy public key using copy module
+    ##################################
+    - name: Copy GCP public key to authorized_keys
+      copy:
+        src: "~/.ssh/gcp_key.pub"
+        dest: "/home/{{ user }}/.ssh/authorized_keys"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: '0600'
+
+    ##################################
+    # Add SSH keys based on cloud provider (existing authorized_key method)
     ##################################
     - name: Set up GCP SSH key
       authorized_key:
@@ -60,10 +82,10 @@
         user: "{{ user }}"
         key: "{{ lookup('file', '~/Desktop/Repositories/ansible/my-ssh-key.pem') }}"
       when: false
-#      when:
-#        - "'aws_ec2' in group_names"
-#        - ansible_os_family in ['Debian', 'RedHat']
-#        - not skip_aws_ssh_key | default(false)
+    #      when:
+    #        - "'aws_ec2' in group_names"
+    #        - ansible_os_family in ['Debian', 'RedHat']
+    #        - not skip_aws_ssh_key | default(false)
 
     - name: Show group names for each host
       debug:

@@ -6,7 +6,7 @@
 
   vars:
     # Define variables for reuse throughout the playbook
-    username: demo_user  # The username to be created and managed on remote servers
+    username: kube_user  # The username to be created and managed on remote servers
 
     # If the key is for AWS, use the .pem private key; if it's for GCP, use the .pub public key
     cloud_provider: "aws"  # Choose "aws" or "gcp" based on your cloud provider

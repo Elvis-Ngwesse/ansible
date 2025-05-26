@@ -1,0 +1,103 @@
+---
+- name: Initialise master node and get join command
+  hosts: tag__items___master____ping____ssh__
+  remote_user: root
+  become: yes
+  gather_facts: true
+
+  tasks:
+
+    - name: Get kubeadm join command
+      command: kubeadm token create --print-join-command
+      register: join_command
+
+    - name: Show kubeadm join command
+      debug:
+        msg: "{{ join_command.stdout }}"
+
+    - name: Set join command as a fact on the master
+      set_fact:
+        kube_join_command: "{{ join_command.stdout }}"
+
+    - name: Check if kube-apiserver is listening on port 6443
+      shell: ss -tuln | grep :6443 || true
+      register: apiserver_port
+      ignore_errors: yes
+
+    - name: Show kube-apiserver port check result
+      debug:
+        var: apiserver_port.stdout
+
+
+- name: Join worker nodes to Kubernetes cluster
+  hosts: tag__items___ping____ssh____worker__
+  remote_user: root
+  become: yes
+  gather_facts: true
+
+  vars:
+    master_group_name: tag__items___master____ping____ssh__
+    master_ip: "{{ hostvars[groups[master_group_name][0]]['ansible_host'] | default(groups[master_group_name][0]) }}"
+
+  tasks:
+
+    - name: Check if kubelet config exists (indicates node is joined)
+      stat:
+        path: /etc/kubernetes/kubelet.conf
+      register: kubelet_conf
+
+    - name: Test connectivity from worker to master port 6443
+      shell: nc -zv {{ master_ip }} 6443
+      register: nc_test
+      ignore_errors: yes
+      when: not kubelet_conf.stat.exists
+
+    - name: Show connectivity test result
+      debug:
+        var: nc_test.stdout
+      when: not kubelet_conf.stat.exists
+
+    - name: Wait for port 6443 to be open on master
+      wait_for:
+        host: "{{ master_ip }}"
+        port: 6443
+        timeout: 120
+        state: started
+      when: not kubelet_conf.stat.exists
+
+    - name: Get join command from master hostvars
+      set_fact:
+        kube_join_command: "{{ hostvars[groups[master_group_name][0]]['kube_join_command'] }}"
+
+    - name: Join worker node to the cluster
+      command: "{{ kube_join_command }}"
+      register: join_command_executed
+      when:
+        - not kubelet_conf.stat.exists
+        - kube_join_command is defined
+
+    - name: Show join command result or skip message
+      debug:
+        msg: >-
+          {% if kubelet_conf.stat.exists %}
+            Node already joined to cluster, skipping join.
+          {% else %}
+            Join command output: {{ join_command_executed.stdout }}
+          {% endif %}
+
+
+- name: Show summary of master and worker nodes at the end
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Print master nodes info
+      debug:
+        msg: |
+          Master node: {{ item }}
+          Join command: {{ hostvars[item]['kube_join_command'] | default('Not found') }}
+      loop: "{{ groups['tag__items___master____ping____ssh__'] }}"
+
+    - name: Print worker nodes info
+      debug:
+        msg: "Worker node: {{ item }}"
+      loop: "{{ groups['tag__items___ping____ssh____worker__'] }}"
